@@ -91,6 +91,73 @@ def getSampleNorm(files, local=True):
         sumw2 += res[2]
     return nEvents, sumw, sumw2
 
+def getBranches(files, local=True):
+    import ROOT
+
+    files = [ 'root://cmsxrootd.fnal.gov/'+f for f in files ] if not local else files
+    branches = []
+
+    for f in files:
+        c = ROOT.TChain("Runs")
+        c.Add(f)
+        c.GetEntry(0)
+    
+        for b in c.GetListOfBranches():
+            branches.append(b.GetName())
+        branches.remove("run")
+    return branches
+
+def getMasses(branches):
+    masses = []
+    for i in range(len(branches)):
+        mystr = branches[i]
+        iMass = mystr.index("TChiWH_")
+        mass = mystr[iMass:][7:]
+        masses.append(mass)
+    masses = list(dict.fromkeys(masses))
+    return masses
+
+def getScanNorm(files):
+    import ROOT
+
+    files = [ 'root://cmsxrootd.fnal.gov/'+f for f in files ] if not local else files
+
+    masses = getMasses(getBranches(files))
+    dictionaries = []
+
+    for f in files:
+        c = ROOT.TChain("Runs")
+        c.Add(f)
+        c.GetEntry(0)
+    
+        branches = []
+
+        for b in c.GetListOfBranches():
+            branches.append(b.GetName())
+        branches.remove("run")
+
+        for m in range(len(masses)):
+            branchName = 'genEventCount_TChiWH_'+masses[m]
+            if branchName in branches:
+                nEvents = getattr(c, 'genEventCount_TChiWH_'+masses[m])
+                sumw = getattr(c, 'genEventSumw_TChiWH_'+masses[m])
+                sumw2 = getattr(c, 'genEventSumw2_TChiWH_'+masses[m])
+
+                for d in range(len(dictionaries)):
+                    if d["mass"] == masses[m]:
+                        d["nEvents"] += nEvents
+                        d["sumw"] += sumw
+                        d["sumw2"] += sumw2
+                    else:
+                        dictionaries.append({"mass": masses[m],
+                                             "nEvents": nEvents,
+                                             "sumw": sumw,
+                                             "sumw2": sumw2})
+            else:
+                continue
+    return dictionaries
+
+
 def main():
 
     config = loadConfig()
@@ -117,17 +184,25 @@ def main():
         print ("Is local?", local)
         print (sample[0])
 
+        # scan (fastsim) sample?
+        fastsim = (sample[0].count('Fast'))
+        print ("Is fastsim?", fastsim)
+        print (sample[0])
+
         if local:
             sample_dict['path'] = sample[0]
             allFiles = glob.glob(sample[0] + '/*.root')
         else:
             sample_dict['path'] = None
             allFiles = dasWrapper(sample[0], query='file')
-        # 
         print (allFiles)
-        sample_dict['files'] = allFiles
 
-        nEvents, sumw, sumw2 = getSampleNorm(allFiles, local=local)
+        if fastsim:
+
+        else:
+            sample_dict['files'] = allFiles
+
+            nEvents, sumw, sumw2 = getSampleNorm(allFiles, local=local)
 
         sample_dict.update({'sumWeight': sumw, 'nEvents': nEvents, 'xsec': float(sample[1]), 'name':name})
         
