@@ -199,6 +199,7 @@ def main():
 
         if fastsim:
 
+
         else:
             sample_dict['files'] = allFiles
 
