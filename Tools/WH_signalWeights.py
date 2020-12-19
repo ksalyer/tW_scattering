@@ -4,12 +4,11 @@ import os
 
 def getSignalWeight(df, model, year=2016):
 
-    if year==2018:
-        with open(os.path.expandvars('$TWHOME/data/WH_signalweights_2018.pkl'), 'rb') as f:
-            signal_dict = pickle.load(f)
+
+    with open(os.path.expandvars('$TWHOME/data/WH_signalweights_%s.pkl'%year), 'rb') as f:
+        signal_dict = pickle.load(f)
 
     signal_df = pd.DataFrame(signal_dict)
-        
 
     tmp_name  = model.split('_')[0].replace('TChi','')
     tmp_mNLSP = int(model.split('_')[1])
