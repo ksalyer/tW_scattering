@@ -63,7 +63,7 @@ class LeptonSF:
         
         if self.year == 2016:
             ele_sf_reco     = self.evaluator["ele_2016_reco"](ele[ele.pt>20].eta, ele[ele.pt>20].pt)
-            ele_sf_reco_low = self.evaluator["ele_2016_reco"](ele[ele.pt<=20].eta, ele[ele.pt<=20].pt)
+            ele_sf_reco_low = self.evaluator["ele_2016_reco_low"](ele[ele.pt<=20].eta, ele[ele.pt<=20].pt)
             ele_sf_id       = self.evaluator["ele_2016_id"](ele.eta, ele.pt)
             ele_sf_iso      = self.evaluator["ele_2016_iso"](ele.eta, ele.pt)
 
@@ -74,7 +74,7 @@ class LeptonSF:
 
         elif self.year == 2017:
             ele_sf_reco     = self.evaluator["ele_2017_reco"](ele[ele.pt>20].eta, ele[ele.pt>20].pt)
-            ele_sf_reco_low = self.evaluator["ele_2017_reco"](ele[ele.pt<=20].eta, ele[ele.pt<=20].pt)
+            ele_sf_reco_low = self.evaluator["ele_2017_reco_low"](ele[ele.pt<=20].eta, ele[ele.pt<=20].pt)
             ele_sf_id       = self.evaluator["ele_2017_id"](ele.eta, ele.pt)
             ele_sf_iso      = self.evaluator["ele_2017_iso"](ele.eta, ele.pt)
 
@@ -95,6 +95,11 @@ class LeptonSF:
 
 
         return sf
+
+    def values(self):
+
+        return 0
+        
 
 
 if __name__ == '__main__':

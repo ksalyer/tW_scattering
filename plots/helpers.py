@@ -79,6 +79,8 @@ colors = {
     'ST': '#8AC926',
     'WJets': '#1982C4',
     'TTJets': '#F76F8E',
+    'TChiWH_1000_1': '#FF595E',
+    'TChiWH_800_1': '#000000',
 
 }
 '''
@@ -101,6 +103,8 @@ my_labels = {
     'diboson': 'VV/VVV',
 
     '1000_1_scan': 'WH (1000,1) FS',
+    'TChiWH_1000_1': 'WH (1000,1) FS',
+    'TChiWH_800_1': 'WH (1000,1) FS',
     'LL': 'Lost Lepton',
     'ZNuNu': r'$Z \rightarrow inv$',
     'QCD': 'QCD',

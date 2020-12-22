@@ -127,7 +127,8 @@ def getMuons(df, WP='veto'):
             mass = df['Muon_mass'].content,
             miniPFRelIso_all=df['Muon_miniPFRelIso_all'].content,
             looseId =df['Muon_looseId'].content,
-            mediumId =df['Muon_mediumId'].content
+            mediumId =df['Muon_mediumId'].content,
+            pdgId =df['Muon_pdgId'].content,
             )
     if WP=='veto':
         return muon[(muon.pt > 10) & (abs(muon.eta) < 2.4) & (muon.looseId) & (muon.miniPFRelIso_all < 0.2)]
