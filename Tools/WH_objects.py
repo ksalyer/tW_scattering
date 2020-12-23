@@ -180,14 +180,16 @@ def getIsoTracks(df, WP='veto'):
         return isotrack[(isotrack.pt > 10) & (abs(isotrack.eta) < 2.4) & ((isotrack.rel_iso < 0.1) | ((isotrack.rel_iso*isotrack.pt) < 6))]
  
     
-def getFatJets(df):
+def getFatJets(df, ptcorr=None, masscorr=None):
+    ptpostfix = '' if ptcorr is None else ptcorr
+    masspostfix = '' if masscorr is None else masscorr
     fatjet = JaggedCandidateArray.candidatesfromcounts(
             df['nFatJet'],
-            pt = df['FatJet_pt'].content,
+            pt = df['FatJet_pt%s'%ptpostfix].content,
             eta = df['FatJet_eta'].content,
             phi = df['FatJet_phi'].content,
-            mass = df['FatJet_mass'].content,
-            msoftdrop = df["FatJet_msoftdrop"].content,  
+            mass = df['FatJet_mass%s'%masspostfix].content,
+            msoftdrop = df["FatJet_msoftdrop%s"%masspostfix].content,  
             deepTagMD_HbbvsQCD = df['FatJet_deepTagMD_HbbvsQCD'].content, 
             deepTagMD_WvsQCD = df['FatJet_deepTagMD_WvsQCD'].content, 
             deepTag_WvsQCD = df['FatJet_deepTag_WvsQCD'].content
