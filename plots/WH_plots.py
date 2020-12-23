@@ -2,17 +2,12 @@
 small script that reades histograms from an archive and saves figures in a public space
 
 ToDo:
-[x] Cosmetics (labels etc)
-[x] ratio pad!
-  [x] pseudo data
-    [ ] -> move to processor to avoid drawing toys every time!
-[x] uncertainty band
-[ ] fix shapes
 '''
 
 
 from coffea import hist
 import pandas as pd
+import numpy as np
 import os
 
 import matplotlib
@@ -29,7 +24,11 @@ from helpers import *
 # load the configuration
 cfg = loadConfig()
 
-year = 2017
+year            = 2017
+separateSignal  = False
+scaleSignal     = 0
+useData         = True
+normalize       = True
 
 if year == 2016:
     lumi = 35.9
@@ -61,12 +60,19 @@ bins = {\
     'met_W_CR':   {'axis': 'pt',      'overflow':'over',  'bins': hist.Bin('pt', r'$p_{T}^{miss}\ (GeV)$', 7, 0, 700)},
     'met_Higgs_CR':   {'axis': 'pt',      'overflow':'over',  'bins': hist.Bin('pt', r'$p_{T}^{miss}\ (GeV)$', 7, 0, 700)},
     'met_Higgs_W_CR':   {'axis': 'pt',      'overflow':'over',  'bins': hist.Bin('pt', r'$p_{T}^{miss}\ (GeV)$', 7, 0, 700)},
-    'N_AK4_baseline':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('pt', r'$N_{AK4}$', 10, -0.5, 9.5)},
+    'N_AK4_baseline':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{AK4}$', 10, -0.5, 9.5)},
     #'N_AK4_extra_baseline':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('pt', r'$N_{AK4} (cleaned)$', 10, -0.5, 9.5)},
-    'N_AK8_baseline':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('pt', r'$N_{AK8}$', 10, -0.5, 9.5)},
-    'N_AK8_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('pt', r'$N_{AK8}$', 10, -0.5, 9.5)},
-    'N_W_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('pt', r'$N_{W}$', 5, -0.5, 4.5)},
-    'N_H_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('pt', r'$N_{H}$', 5, -0.5, 4.5)},
+    'N_AK8_baseline':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{AK8}$', 10, -0.5, 9.5)},
+    'N_AK8_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{AK8}$', 10, -0.5, 9.5)},
+    'N_W_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{W}$', 5, -0.5, 4.5),
+                    'upHists':['N_W_CR_WSFUp'], 'downHists':['N_W_CR_WSFDown']},
+    'N_W_0b_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{W}$', 5, -0.5, 4.5),
+                    'upHists':['N_W_0b_CR_WSFUp'], 'downHists':['N_W_0b_CR_WSFDown']},
+    'N_W_1b_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{W}$', 5, -0.5, 4.5),
+                    'upHists':['N_W_1b_CR_WSFUp'], 'downHists':['N_W_1b_CR_WSFDown']},
+    'N_W_1b_1j_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{W}$', 5, -0.5, 4.5),
+                    'upHists':['N_W_1b_1j_CR_WSFUp'], 'downHists':['N_W_1b_1j_CR_WSFDown']},
+    'N_H_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{H}$', 5, -0.5, 4.5)},
     'min_dphiFatJetMet4':   {'axis': 'delta',      'overflow':'over',  'bins': hist.Bin('delta', r'$min \Delta \varphi(AK8, MET)$', 10, 0, 5)},
     'dphiDiFatJet':   {'axis': 'delta',      'overflow':'over',  'bins': hist.Bin('delta', r'$\Delta \varphi(AK8)$', 10, 0, 5)},
     'W_pt_W_CR':   {'axis': 'pt',      'overflow':'over',  'bins': hist.Bin('pt', r'$p_{T} (W)\ (GeV)$', 7, 0, 700)},
@@ -87,12 +93,19 @@ bins = {\
     'sublead_AK8_Wscore':   {'axis': 'score',      'overflow':'over',  'bins': hist.Bin('score', 'Wqq score (sublead AK8)', 25, 0, 1)},
     }
 
-separateSignal = False
-scaleSignal = 0
-useData = True
 
 #import mplhep
 #plt.style.use(mplhep.style.CMS)
+
+import re
+#notdata = re.compile('(?!(Data|mC750))')
+notdata = re.compile('(?!(Data))')
+
+signal = 'mC750_l1'
+#processes = ['QCD', 'ZNuNu', 'WW', 'ttW', 'ST', 'WJets', 'TTJets']
+processes = ['QCD', 'ZNuNu', 'WW', 'ST', 'WJets', 'TTJets']
+
+notsignal = re.compile('(?!%s)'%signal)
 
 for name in bins:
     print (name)
@@ -109,15 +122,16 @@ for name in bins:
     y_max = histogram.sum("dataset").values(overflow='over')[()].max()
     y_over = histogram.sum("dataset").values(overflow='over')[()][-1]
 
+    MC_total = histogram[notdata].sum("dataset").values(overflow='over')[()].sum()
+    Data_total = histogram['Data'].sum("dataset").values(overflow='over')[()].sum()
 
-    signal = 'mC750_l1'
-    #processes = ['QCD', 'ZNuNu', 'WW', 'ttW', 'ST', 'WJets', 'TTJets']
-    processes = ['QCD', 'ZNuNu', 'WW', 'ST', 'WJets', 'TTJets']
-    import re
-    #notdata = re.compile('(?!(Data|mC750))')
-    notdata = re.compile('(?!(Data))')
+    if normalize:
+        scales = { process: Data_total/MC_total for process in processes }
+        histogram.scale(scales, axis='dataset')
+    else:
+        scales = {}
 
-    notsignal = re.compile('(?!%s)'%signal)
+
 
     if useData:
         fig, (ax, rax) = plt.subplots(2, 1, figsize=(7,7), gridspec_kw={"height_ratios": (3, 1)}, sharex=True)
@@ -126,10 +140,16 @@ for name in bins:
 
     # get axes
     if useData:
-        hist.plot1d(histogram[notdata], overlay="dataset", ax=ax, stack=True, overflow=bins[name]['overflow'], fill_opts=fill_opts, error_opts=error_opts, order=processes)
+        hist.plot1d(histogram[notdata], overlay="dataset", ax=ax, stack=True, overflow=bins[name]['overflow'], fill_opts=fill_opts, order=processes)
+        #hist.plot1d(histogram[notdata], overlay="dataset", ax=ax, stack=True, overflow=bins[name]['overflow'], fill_opts=fill_opts, error_opts=error_opts, order=processes)
         #hist.plot1d(histogram['QCD'], overlay="dataset", ax=ax, stack=False, overflow=bins[name]['overflow'], clear=False, line_opts=None, fill_opts=fill_opts, error_opts=error_opts, order=processes)
         hist.plot1d(histogram['Data'], overlay="dataset", ax=ax, overflow=bins[name]['overflow'], error_opts=data_err_opts, clear=False)
         #hist.plot1d(histogram[signal], overlay="dataset", ax=ax, overflow=bins[name]['overflow'], line_opts={'linewidth':3}, clear=False)
+
+    if 'upHists' in bins[name]:
+        addUncertainties(ax, axis, histogram, notdata, [output[x] for x in bins[name]['upHists']], [output[x] for x in bins[name]['downHists']], overflow=bins[name]['overflow'], rebin=bins[name]['bins'], ratio=False, scales=scales)
+    else:
+        addUncertainties(ax, axis, histogram, notdata, [], [], overflow=bins[name]['overflow'], rebin=bins[name]['bins'], ratio=False, scales=scales)
 
     if useData:
         # build ratio
@@ -144,10 +164,15 @@ for name in bins:
             overflow=bins[name]['overflow']
         )
 
+        if 'upHists' in bins[name]:
+            addUncertainties(rax, axis, histogram, notdata, [output[x] for x in bins[name]['upHists']], [output[x] for x in bins[name]['downHists']], overflow=bins[name]['overflow'], rebin=bins[name]['bins'], ratio=True, scales=scales)
+        else:
+            addUncertainties(rax, axis, histogram, notdata, [], [], overflow=bins[name]['overflow'], rebin=bins[name]['bins'], ratio=True, scales=scales)
+
 
     for l in ['linear', 'log']:
         if useData:
-            saveFig(fig, ax, rax, plotDir, name, scale=l, shape=False, y_max=y_max, preliminary='Preliminary', lumi=lumi)
+            saveFig(fig, ax, rax, plotDir, name, scale=l, shape=False, y_max=y_max, preliminary='Preliminary', lumi=lumi, normalize=(Data_total/MC_total))
         else:
             saveFig(fig, ax, None, plotDir, name, scale=l, shape=False, y_max=y_max)
     fig.clear()
