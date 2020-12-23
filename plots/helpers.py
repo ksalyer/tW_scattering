@@ -1,8 +1,9 @@
 import os
+import numpy as np
 import matplotlib.pyplot as plt
 from Tools.helpers import finalizePlotDir
 
-def saveFig( fig, ax, rax, path, name, scale='linear', shape=False, y_max=-1, preliminary='Simulation', lumi=137 ):
+def saveFig( fig, ax, rax, path, name, scale='linear', shape=False, y_max=-1, preliminary='Simulation', lumi=137, normalize=False ):
     outdir = os.path.join(path,scale)
     finalizePlotDir(outdir)
     ax.set_yscale(scale)
@@ -47,14 +48,59 @@ def saveFig( fig, ax, rax, path, name, scale='linear', shape=False, y_max=-1, pr
 
     ax.legend(title='',ncol=2,handles=handles, labels=new_labels, frameon=False)
 
+    if normalize:
+        fig.text(0.05, 0.90, 'Data/MC = %s'%round(normalize,2), fontsize=14,  horizontalalignment='left', verticalalignment='bottom', transform=ax.transAxes )
     fig.text(0., 0.995, '$\\bf{CMS}$', fontsize=20,  horizontalalignment='left', verticalalignment='bottom', transform=ax.transAxes )
     fig.text(0.15, 1., '$\\it{%s}$'%preliminary, fontsize=14, horizontalalignment='left', verticalalignment='bottom', transform=ax.transAxes )
     fig.text(0.65, 1., '$%s fb^{-1}$'%lumi, fontsize=14, horizontalalignment='left', verticalalignment='bottom', transform=ax.transAxes )
-    fig.text(0.8, 1., '13 TeV', fontsize=14, horizontalalignment='left', verticalalignment='bottom', transform=ax.transAxes )
+    fig.text(0.85, 1., '13 TeV', fontsize=14, horizontalalignment='left', verticalalignment='bottom', transform=ax.transAxes )
 
     fig.savefig(os.path.join(outdir, "{}.pdf".format(name)))
     fig.savefig(os.path.join(outdir, "{}.png".format(name)))
     #ax.clear()
+
+def addUncertainties(ax, axis, h, selection, up_vars, down_vars, overflow='over', rebin=False, ratio=False, scales={}):
+    
+    
+    if rebin:
+        h = h.rebin(axis, rebin)
+    
+    bins = h[selection].axis(axis).edges(overflow=overflow)
+    
+    values = h[selection].sum('dataset').values(overflow=overflow, sumw2=True)[()]
+    central = values[0]
+    stats = values[1]
+    
+    up = np.zeros_like(central)
+    down = np.zeros_like(central)
+    
+    for up_var in up_vars:
+        if rebin:
+            up_var = up_var.rebin(axis, rebin)
+            up_var.scale(scales, axis='dataset')
+        up += (up_var[selection].sum('dataset').values(overflow=overflow, sumw2=False)[()] - central)**2
+    
+    for down_var in down_vars:
+        if rebin:
+            down_var = down_var.rebin(axis, rebin)
+            down_var.scale(scales, axis='dataset')
+        down += (down_var[selection].sum('dataset').values(overflow=overflow, sumw2=False)[()] - central)**2
+    
+    up   += stats 
+    down += stats
+ 
+    if ratio:
+        up = np.ones_like(central) + np.sqrt(up)/central
+        down = np.ones_like(central) - np.sqrt(down)/central
+    else:
+        up = central + np.sqrt(up)
+        down = central - np.sqrt(down)
+    
+    opts = {'step': 'post', 'label': 'uncertainty', 'hatch': '///',
+                    'facecolor': 'none', 'edgecolor': (0, 0, 0, .5), 'linewidth': 0}
+    
+    ax.fill_between(x=bins, y1=np.r_[down, down[-1]], y2=np.r_[up, up[-1]], **opts)
+
 
 colors = {
     #'mC750_l1': '#FF595E',
@@ -80,6 +126,8 @@ colors = {
     'ST': '#8AC926',
     'WJets': '#1982C4',
     'TTJets': '#F76F8E',
+    'TChiWH_1000_1': '#FF595E',
+    'TChiWH_800_1': '#000000',
 
 }
 
@@ -105,6 +153,8 @@ my_labels = {
     'diboson': 'VV/VVV',
 
     '1000_1_scan': 'WH (1000,1) FS',
+    'TChiWH_1000_1': 'WH (1000,1) FS',
+    'TChiWH_800_1': 'WH (1000,1) FS',
     'LL': 'Lost Lepton',
     'ZNuNu': r'$Z \rightarrow inv$',
     'QCD': 'QCD',
