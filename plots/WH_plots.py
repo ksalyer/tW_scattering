@@ -24,7 +24,7 @@ from helpers import *
 # load the configuration
 cfg = loadConfig()
 
-year            = 2017
+year            = 2018
 separateSignal  = False
 scaleSignal     = 0
 useData         = True
@@ -158,9 +158,10 @@ for name in bins:
             denom=histogram[notdata].sum("dataset"),
             ax=rax,
             error_opts=data_err_opts,
-            denom_fill_opts={},
+            denom_fill_opts=None, # triggers this: https://github.com/CoffeaTeam/coffea/blob/master/coffea/hist/plot.py#L376
             guide_opts={},
             unc='num',
+            #unc=None,
             overflow=bins[name]['overflow']
         )
 
