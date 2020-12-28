@@ -227,15 +227,18 @@ def getHTags(fatjet, year=2016):
     elif year == 2018:
         return fatjet[(fatjet.deepTagMD_HbbvsQCD > 0.8365)] 
 
-def getWTags(fatjet, year=2016):
+def getWTags(fatjet, year=2016, WP='1p0'):
     # 1% WP
     # https://twiki.cern.ch/twiki/bin/viewauth/CMS/DeepAK8Tagging2018WPsSFs
     if year == 2016:
-        return fatjet[(fatjet.deepTag_WvsQCD > 0.918)] 
+        cuts = {'1p0': 0.918, '2p5': 0.763}
+        return fatjet[(fatjet.deepTag_WvsQCD > cuts[WP])] 
     elif year == 2017:
-        return fatjet[(fatjet.deepTag_WvsQCD > 0.925)] 
+        cuts = {'1p0': 0.925, '2p5': 0.772}
+        return fatjet[(fatjet.deepTag_WvsQCD > cuts[WP])] 
     elif year == 2018:
-        return fatjet[(fatjet.deepTag_WvsQCD > 0.918)] # yes, really
+        cuts = {'1p0': 0.918, '2p5': 0.762}
+        return fatjet[(fatjet.deepTag_WvsQCD > cuts[WP])] # yes, really
 
 def getGenW(df):
     GenW = JaggedCandidateArray.candidatesfromcounts(
