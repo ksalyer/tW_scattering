@@ -25,7 +25,7 @@ from helpers import *
 # load the configuration
 cfg = loadConfig()
 
-year            = 2019
+year            = 2018
 separateSignal  = False
 scaleSignal     = 0
 useData         = True
@@ -149,6 +149,8 @@ for name in bins:
 
     MC_total = histogram[notdata].sum("dataset").values(overflow='over')[()].sum()
     Data_total = histogram['Data'].sum("dataset").values(overflow='over')[()].sum()
+
+    print ("Data:", round(Data_total,0), "MC:", round(MC_total,2))
 
     if normalize:
         scales = { process: Data_total/MC_total for process in processes }

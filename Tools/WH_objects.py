@@ -249,3 +249,20 @@ def getGenW(df):
             mass = ((df['GenW_pt']>0)*80).content,
         )
     return GenW
+
+def getGenParts(df):
+    GenPart = JaggedCandidateArray.candidatesfromcounts(
+        df['nGenPart'],
+        pt=df['GenPart_pt'].content,
+        eta=df['GenPart_eta'].content,
+        phi=df['GenPart_phi'].content,
+        mass=df['GenPart_mass'].content,
+        pdgId=df['GenPart_pdgId'].content,
+        status=df['GenPart_status'].content,
+        genPartIdxMother=df['GenPart_genPartIdxMother'].content,
+        statusFlags=df['GenPart_statusFlags'].content,
+    )
+
+def getHadWFromGenPart(GenPart):
+    return GenPart[GenPart[((GenPart.pdgId<6) & (GenPart.pdgId>0) & (abs(GenPart[GenPart.genPartIdxMother].pdgId)==24))].genPartIdxMother]
+
