@@ -4,7 +4,8 @@ small script that reades histograms from an archive and saves figures in a publi
 ToDo:
 '''
 
-
+import coffea
+import copy
 from coffea import hist
 import pandas as pd
 import numpy as np
@@ -36,20 +37,40 @@ elif year == 2017:
     lumi = 41.5
 elif year == 2018:
     lumi = 60.0
+elif year == 2019:
+    lumi = 35.9+41.5+60.0
 
-# load the results
-cache = dir_archive(os.path.join(os.path.expandvars(cfg['caches']['base']), 'WH_LL_%s'%year), serialized=True)
+if year == 2019:
+    # load the results
+    first = True
+    for y in [2016,2017,2018]:
+        cache = dir_archive(os.path.join(os.path.expandvars(cfg['caches']['base']), 'WH_LL_%s'%y), serialized=True)
+        cache.load()
+        tmp_output = cache.get('simple_output')
+        if first:
+            output = copy.deepcopy(tmp_output)
+        else:
+            for key in tmp_output:
+                if type(tmp_output[key]) == coffea.hist.hist_tools.Hist:
+                    output[key].add(tmp_output[key])
+        first = False
+        del cache
+else:
+    cache = dir_archive(os.path.join(os.path.expandvars(cfg['caches']['base']), 'WH_LL_%s'%year), serialized=True)
+    cache.load()
+    output = cache.get('simple_output')
+
 #cache = dir_archive(os.path.join(os.path.expandvars(cfg['caches']['base']), cfg['caches']['WH_small']), serialized=True)
-cache.load()
+#cache.load()
 
-histograms = cache.get('histograms')
-output = cache.get('simple_output')
+#histograms = cache.get('histograms')
+#output = cache.get('simple_output')
 plotDir = os.path.expandvars(cfg['meta']['plots']) + '/plots_WH_LL_SF_W_%s/'%year
 finalizePlotDir(plotDir)
 
-if not histograms:
-    print ("Couldn't find histograms in archive. Quitting.")
-    exit()
+#if not histograms:
+#    print ("Couldn't find histograms in archive. Quitting.")
+#    exit()
 
 print ("Plots will appear here:", plotDir )
 
@@ -68,10 +89,14 @@ bins = {\
                     'upHists':['N_W_CR_WSFUp'], 'downHists':['N_W_CR_WSFDown']},
     'N_W_0b_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{W}$', 5, -0.5, 4.5),
                     'upHists':['N_W_0b_CR_WSFUp'], 'downHists':['N_W_0b_CR_WSFDown']},
+    'N_W2p5_0b_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{W}$', 5, -0.5, 4.5),
+                    'upHists':['N_W2p5_0b_CR_WSFUp'], 'downHists':['N_W2p5_0b_CR_WSFDown']},
     'N_W_1b_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{W}$', 5, -0.5, 4.5),
                     'upHists':['N_W_1b_CR_WSFUp'], 'downHists':['N_W_1b_CR_WSFDown']},
     'N_W_1b_1j_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{W}$', 5, -0.5, 4.5),
                     'upHists':['N_W_1b_1j_CR_WSFUp'], 'downHists':['N_W_1b_1j_CR_WSFDown']},
+    'N_W2p5_1b_1j_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{W}$', 5, -0.5, 4.5),
+                    'upHists':['N_W2p5_1b_1j_CR_WSFUp'], 'downHists':['N_W2p5_1b_1j_CR_WSFDown']},
     'N_H_CR':   {'axis': 'multiplicity',      'overflow':'over',  'bins': hist.Bin('multiplicity', r'$N_{H}$', 5, -0.5, 4.5)},
     'min_dphiFatJetMet4':   {'axis': 'delta',      'overflow':'over',  'bins': hist.Bin('delta', r'$min \Delta \varphi(AK8, MET)$', 10, 0, 5)},
     'dphiDiFatJet':   {'axis': 'delta',      'overflow':'over',  'bins': hist.Bin('delta', r'$\Delta \varphi(AK8)$', 10, 0, 5)},
@@ -124,6 +149,8 @@ for name in bins:
 
     MC_total = histogram[notdata].sum("dataset").values(overflow='over')[()].sum()
     Data_total = histogram['Data'].sum("dataset").values(overflow='over')[()].sum()
+
+    print ("Data:", round(Data_total,0), "MC:", round(MC_total,2))
 
     if normalize:
         scales = { process: Data_total/MC_total for process in processes }

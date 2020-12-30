@@ -227,15 +227,18 @@ def getHTags(fatjet, year=2016):
     elif year == 2018:
         return fatjet[(fatjet.deepTagMD_HbbvsQCD > 0.8365)] 
 
-def getWTags(fatjet, year=2016):
+def getWTags(fatjet, year=2016, WP='1p0'):
     # 1% WP
     # https://twiki.cern.ch/twiki/bin/viewauth/CMS/DeepAK8Tagging2018WPsSFs
     if year == 2016:
-        return fatjet[(fatjet.deepTag_WvsQCD > 0.918)] 
+        cuts = {'1p0': 0.918, '2p5': 0.763}
+        return fatjet[(fatjet.deepTag_WvsQCD > cuts[WP])] 
     elif year == 2017:
-        return fatjet[(fatjet.deepTag_WvsQCD > 0.925)] 
+        cuts = {'1p0': 0.925, '2p5': 0.772}
+        return fatjet[(fatjet.deepTag_WvsQCD > cuts[WP])] 
     elif year == 2018:
-        return fatjet[(fatjet.deepTag_WvsQCD > 0.918)] # yes, really
+        cuts = {'1p0': 0.918, '2p5': 0.762}
+        return fatjet[(fatjet.deepTag_WvsQCD > cuts[WP])] # yes, really
 
 def getGenW(df):
     GenW = JaggedCandidateArray.candidatesfromcounts(
@@ -246,3 +249,30 @@ def getGenW(df):
             mass = ((df['GenW_pt']>0)*80).content,
         )
     return GenW
+
+def getGenParts(df):
+    GenPart = JaggedCandidateArray.candidatesfromcounts(
+        df['nGenPart'],
+        pt=df['GenPart_pt'].content,
+        eta=df['GenPart_eta'].content,
+        phi=df['GenPart_phi'].content,
+        mass=df['GenPart_mass'].content,
+        pdgId=df['GenPart_pdgId'].content,
+        status=df['GenPart_status'].content,
+        genPartIdxMother=df['GenPart_genPartIdxMother'].content,
+        statusFlags=df['GenPart_statusFlags'].content,
+    )
+    return GenPart
+
+def getHadW(df):
+    # Get hadronically decaying W from the data frame
+    # We first get the GenParts that have a mother with abs(PDG ID) = 24 with an abs(PDG ID) < 6.
+    # Then, we get the mother GenParts of those. Because we don't want to get the same W bosons twice, we can just require PDG ID < 6 instead of abs(PDG ID) < 6
+    GenPart = getGenParts(df)
+    return GenPart[GenPart[((GenPart.pdgId<6) & (GenPart.pdgId>0) & (abs(GenPart[GenPart.genPartIdxMother].pdgId)==24))].genPartIdxMother]
+
+def getHadW_fromGenPart(GenPart):
+    # We first get the GenParts that have a mother with abs(PDG ID) = 24 with an abs(PDG ID) < 6.
+    # Then, we get the mother GenParts of those. Because we don't want to get the same W bosons twice, we can just require PDG ID < 6 instead of abs(PDG ID) < 6
+    return GenPart[GenPart[((GenPart.pdgId<6) & (GenPart.pdgId>0) & (abs(GenPart[GenPart.genPartIdxMother].pdgId)==24))].genPartIdxMother]
+
