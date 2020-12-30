@@ -262,7 +262,17 @@ def getGenParts(df):
         genPartIdxMother=df['GenPart_genPartIdxMother'].content,
         statusFlags=df['GenPart_statusFlags'].content,
     )
+    return GenPart
 
-def getHadWFromGenPart(GenPart):
+def getHadW(df):
+    # Get hadronically decaying W from the data frame
+    # We first get the GenParts that have a mother with abs(PDG ID) = 24 with an abs(PDG ID) < 6.
+    # Then, we get the mother GenParts of those. Because we don't want to get the same W bosons twice, we can just require PDG ID < 6 instead of abs(PDG ID) < 6
+    GenPart = getGenParts(df)
+    return GenPart[GenPart[((GenPart.pdgId<6) & (GenPart.pdgId>0) & (abs(GenPart[GenPart.genPartIdxMother].pdgId)==24))].genPartIdxMother]
+
+def getHadW_fromGenPart(GenPart):
+    # We first get the GenParts that have a mother with abs(PDG ID) = 24 with an abs(PDG ID) < 6.
+    # Then, we get the mother GenParts of those. Because we don't want to get the same W bosons twice, we can just require PDG ID < 6 instead of abs(PDG ID) < 6
     return GenPart[GenPart[((GenPart.pdgId<6) & (GenPart.pdgId>0) & (abs(GenPart[GenPart.genPartIdxMother].pdgId)==24))].genPartIdxMother]
 
