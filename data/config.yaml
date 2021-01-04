@@ -1,6 +1,26 @@
 caches:
   WH: WH
   WH_small: WH_small
+  WH_debug: WH_debug
+  WH_small_debug: WH_small_debug
+  WH_LL_Estimate: WH_LL_Estimate
+  WH_2016: WH_2016
+  WH_2017: WH_2017
+  WH_2018: WH_2018
+  WH_unmerged_2016: WH_unmerged_2016
+  WH_unmerged_2017: WH_unmerged_2017
+  WH_unmerged_2018: WH_unmerged_2018
+  WH_SR: WH_SR
+  WH_SR_small: WH_SR_small
+  WH_SR_debug: WH_SR_debug
+  WH_SR_small_debug: WH_SR_small_debug
+  WH_SR_LL_Estimate: WH_SR_LL_Estimate
+  WH_SR_2016: WH_SR_2016
+  WH_SR_2017: WH_SR_2017
+  WH_SR_2018: WH_SR_2018
+  WH_SR_unmerged_2016: WH_SR_unmerged_2016
+  WH_SR_unmerged_2017: WH_SR_unmerged_2017
+  WH_SR_unmerged_2018: WH_SR_unmerged_2018
   base: $TWHOME/caches/
   diLepOS: diLepOS
   diLepOS_small: diLepOS_small
@@ -13,7 +33,7 @@ caches:
   strong_tW_small: strong_tW_small
   triLep: triLep
   triLep_small: triLep_small
-lumi: 1
+lumi: 137
 meta:
   localNano: /hadoop/cms/store/user/dspitzba/nanoAOD/
   localSkim: /hadoop/cms/store/user/$USER/WH_hadronic/

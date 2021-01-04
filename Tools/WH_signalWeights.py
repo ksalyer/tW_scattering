@@ -1,5 +1,6 @@
 import pandas as pd
-import pickle
+#import pickle
+import pickle5 as pickle
 import os
 
 def getSignalWeight(df, model, year=2016):
